@@ -1,4 +1,4 @@
-git init
+
 git add movie_bot_mobile.py
 git commit -m "Add Streamlit movie bot"
 git branch -M main
