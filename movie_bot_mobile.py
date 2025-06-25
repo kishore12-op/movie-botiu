@@ -2,69 +2,48 @@ import streamlit as st
 import requests
 
 API_KEY = 'd4e5f5cfcf11b1712dc7c985e92e4fd4'
-def get_movie_info(movie_name):
-    search_url = f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={movie_name}'
-    search_response = requests.get(search_url).json()
 
-    if not search_response['results']:
-        return None
+BASE_URL = "https://api.themoviedb.org/3"
+POSTER_PATH = "https://image.tmdb.org/t/p/w500"
 
-    movie = search_response['results'][0]
-    movie_id = movie['id']
-    details_url = f'https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}&language=en-US'
-    details_response = requests.get(details_url).json()
+st.set_page_config(page_title="🎬 NeoFlix", layout="wide")
+st.markdown("<h1 style='text-align:center; color:#E50914;'>NeoFlix 🎥</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:white;'>Your futuristic movie explorer 🔮</p>", unsafe_allow_html=True)
 
-    title = movie.get('title', 'N/A')
-    overview = movie.get('overview', 'No overview available.')
-    release = movie.get('release_date', 'Unknown')
-    poster_path = movie.get('poster_path', '')
-    poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else None
-    rating = details_response.get('vote_average', 'N/A')
-    genres = [g['name'] for g in details_response.get('genres', [])]
-    runtime = details_response.get('runtime', 'N/A')
+def fetch_movies(endpoint, params=None):
+    if params is None:
+        params = {}
+    params['api_key'] = API_KEY
+    response = requests.get(f"{BASE_URL}{endpoint}", params=params)
+    return response.json().get("results", [])
 
-    tmdb_link = f"https://www.themoviedb.org/movie/{movie_id}"
+def display_movie_section(title, movies):
+    st.markdown(f"### {title}")
+    cols = st.columns(5)
+    for i, movie in enumerate(movies[:10]):
+        with cols[i % 5]:
+            if movie.get("poster_path"):
+                st.image(f"{POSTER_PATH}{movie['poster_path']}", use_column_width=True)
+                st.caption(movie.get("title", "Unknown"))
 
-    return {
-        'title': title,
-        'overview': overview,
-        'release': release,
-        'poster_url': poster_url,
-        'rating': rating,
-        'genres': genres,
-        'runtime': runtime,
-        'link': tmdb_link
-    }
+# Trending
+trending = fetch_movies("/trending/movie/day")
+display_movie_section("🔥 Trending Movies", trending)
 
-# Streamlit UI
-st.set_page_config(
-    page_title="🎬 Movie Bot",
-    layout="centered",
-)
+# Anime
+anime = fetch_movies("/discover/movie", {"with_genres": "16", "sort_by": "popularity.desc"})
+display_movie_section("🌸 Anime Picks", anime)
 
-st.markdown("<h2 style='text-align: center;'>🎥 Movie Info Chatbot</h2>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Enter a movie name to get info, poster, and legal links.</p>", unsafe_allow_html=True)
+# Adult
+adult = fetch_movies("/discover/movie", {"include_adult": "true", "sort_by": "popularity.desc"})
+display_movie_section("🔞 Adult Movies (18+)", adult)
 
-movie_name = st.text_input("🎞️ Movie Name", placeholder="e.g. Interstellar")
+# New Releases
+now_playing = fetch_movies("/movie/now_playing")
+display_movie_section("🆕 Now Playing", now_playing)
 
-if movie_name:
-    with st.spinner("🔍 Searching..."):
-        result = get_movie_info(movie_name)
-
-    if result:
-        st.image(result['poster_url'], use_column_width=True)
-        st.markdown(f"### {result['title']}")
-        st.markdown(f"📅 **Release Date:** {result['release']}")
-        st.markdown(f"⭐ **Rating:** {result['rating']}")
-        st.markdown(f"🎭 **Genres:** {', '.join(result['genres'])}")
-        st.markdown(f"⏱️ **Runtime:** {result['runtime']} minutes")
-        st.markdown(f"📝 {result['overview']}")
-        st.markdown(f"[🔗 View on TMDb]({result['link']})")
-
-        st.markdown("---")
-        st.markdown("### 🎬 Watch Free Legal Movies:")
-        st.markdown("- [📺 YouTube Free Movies](https://www.youtube.com/movies)")
-        st.markdown("- [🍿 Tubi TV](https://tubitv.com)")
-        st.markdown("- [🎞️ Public Domain Movies](https://publicdomainmovies.net)")
-    else:
-        st.error("❌ Movie not found. Try another name.")
+# YouTube trailer (Optional - embed for 1st trending movie)
+if trending and 'title' in trending[0]:
+    query = trending[0]['title'] + " official trailer"
+    st.markdown("### 🎞️ Featured Trailer")
+    st.video(f"https://www.youtube.com/results?search_query={query.replace(' ', '+')}")
