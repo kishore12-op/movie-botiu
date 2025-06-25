@@ -1,6 +1,7 @@
+import streamlit as st
+import requests
 
-git add movie_bot_mobile.py
-git commit -m "Add Streamlit movie bot"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/movie-bot.git
-git push -u origin main
+API_KEY = 'YOUR_TMDB_API_KEY'  # Replace with your actual key
+
+def get_movie_info(movie_name):
+    ...
