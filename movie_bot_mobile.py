@@ -1,8 +1,7 @@
 import streamlit as st
 import requests
 
-API_KEY = 'YOUR_TMDB_API_KEY'  # Replace this with your actual TMDb API key
-
+API_KEY = 'd4e5f5cfcf11b1712dc7c985e92e4fd4'
 def get_movie_info(movie_name):
     search_url = f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={movie_name}'
     search_response = requests.get(search_url).json()
